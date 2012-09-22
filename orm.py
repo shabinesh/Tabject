@@ -88,7 +88,7 @@ class Query(object):
 	def get_exec(self, table, **kwargs):
 		where_clause =  self._prepare_where_string(**kwargs)
 		query = self.select_frame.format(table = table.lower(), clause = where_clause)
-
+		return query
 		raise NotImplementedError('Operation not supported by adapter')
 
 class Orm(Query):
