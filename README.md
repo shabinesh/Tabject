@@ -1,7 +1,9 @@
 Tabject
 =======
 
-A database table to object, | a striped down fast python ORM.
+A database table to object, | a striped down fast python ORM. Django style orm operations. 
+
+in it's pre*4 alpha.
 
 Usage
 ======
