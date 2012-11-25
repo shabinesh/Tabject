@@ -1,8 +1,8 @@
-
+from .types import *
 
 class Adapter:
 	avaliable_adapters = {
-		'sqlite':'sqlite3',
+		'sqlite3':'sqlite3',
 		'postgresql':'pycopg2',
 		'mysql':'MySQLdb'
 		}
@@ -25,13 +25,13 @@ class Adapter:
 				return __import__(self.avaliable_adapters[db])
 			except:
 				raise ImproperlyConfigured('Adapter Not supported.')
-		raise NotImplementedError('Adapter not avaliable, specify one of {adpters}'.format(adapters=self.avaliable_adapters.keys()))
+		raise NotImplementedError('Adapter not avaliable, specify one of {adapters}'.format(adapters=self.avaliable_adapters.keys()))
 
 	def connect(self, *args, **kwargs):
 		raise NotImplementedError('Implement in subclass.')
 
 class SqliteAdapter(Adapter):
-    __dbname__ = 'sqlite3'
+    __adapter__ = 'sqlite3'
     __affinity__ = {
             ('int',
              'integer',
@@ -62,7 +62,7 @@ class SqliteAdapter(Adapter):
             }
 
     def __init__(self, database, **kwargs):
-        sqlite = self.import_a(SqliteAdapter.__dbname__)
+        sqlite = self.import_a(SqliteAdapter.__adapter__)
         self.operations = {
                 'ieq' : 'LIKE %(v)s ESCAPE',
                 'icontains' : 'GLOB %(v)s',
