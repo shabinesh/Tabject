@@ -22,7 +22,7 @@ class Child:
         elif relation == 'in':
             self.q = spacecat(name, Adapter.operations[relation], ','.join([_surround(str(i),'"', '"') for i in value]))
         else:
-            self.q = spacecat(name, Adapter.operations[relation], value)   
+            self.q = spacecat(name, Adapter.operations[relation], str(value))   
     
     def get_c(self):
         return self.q
