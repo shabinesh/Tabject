@@ -8,7 +8,7 @@ Tabject is in it's very very very early stage.
 The idea of `Tabject` is to plug in Tabject into any application not using ORM, but wants to
 update their code base to eliminate hard coded SQL and use ORM style operation for data access. 
 
-Tabject doesn't support DDL operations which give you immense flexibility and control.
+Tabject supports only DML operations which means you immense flexibility and control over schema.
 
 since Tabject dynamically creates table objects when needed, any change in the table structure 
 get reflected on a application restart. See the below example:
