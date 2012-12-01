@@ -1,3 +1,7 @@
+# Author : Shabinesh <shabi@fossix.org>
+
+# Desc : This file is the SQL generation core.
+
 from .adapters import Adapter
 
 def spacecat(*args):
@@ -31,15 +35,24 @@ class Child:
 class Tree:
     """ Tree"""
     _connectors = ('AND', 'OR')
+    _quantifier = 'DISTINCT'
 
     def __init__(self, table, field=None):
         self.field = field if field else '*'
         self.t = []
-        self.template = "SELECT {0} FROM {1}".format(self.field, table)
+        self.table = table
+        self.distinct_f = False
+
+    def create_select(self):
+        d = self._quantifier if self.distinct_f else ''
+        self.template = "SELECT {0} {1} FROM {2}".format(d, self.field, self.table)
         
     def parse_and_add(self, **kwargs):
         for s, v in kwargs.items():
-            name, relation  = s.split('__')
+            if '__' in s:
+                name, relation  = s.split('__')
+            else:
+                name, relation = s, 'eq'
             self.add(name, v, relation)
 
     def add(self, name, value, relation, connector='AND'):
@@ -58,12 +71,14 @@ class Tree:
 
     def get_sql(self):
         query = ''
+        self.create_select()
         for c, obj in self.t:
             if isinstance(obj, Child):
                 query = spacecat(query, obj.get_c(), c)
             elif isinstance(obj, Tree):
                 query = _surround(obj.get_sql(), '(', ')')
-        return spacecat(self.template, 'WHERE', query).rsplit(' ',1)[0]
+        where_clause = '' if query == '' else 'WHERE'
+        return spacecat(self.template, where_clause, query).rsplit(' ',1)[0]
 
         
 

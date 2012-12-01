@@ -3,30 +3,15 @@ from .tree import Tree
 from .adapters import *
 import sqlite3
 
-""""
-class MkTableObj:
-    @staticmethod
-    def _affinity(klass, adapter, **kwargs):
-        for f, t in kwargs:
-            klass._fields[field] = adapter.get_type(f)()
+class TableMeta(type):
+    def __init__(klass, *args, **kwargs):
+        def getattr(self, n):
+            if n in self._fields:
+                return n
+            raise AttributeError('{0} not a table field'.format(n))
 
-    def __init__(self, table, bases, adapter, kwargs):
-        klass = type(table, bases, {})
-        def setattr(self, f, v):
-            if f in self._fields:
-                self._fields[f] = v #change value to type
-    
-        def getattribute(self, f):
-            if f in self._fields:
-                return self._fields[f]
-            raise AttributeError
-        
-        klass.__setattr__ = setattr
-        klass.__getattribute__ = getattribute
-        klass.__table__ = table
-        klass._fields = MkTableObject._affinity(adapter, kwargs)
-
-"""
+        setattr(klass, '__getattr__', getattr)
+        super(TableMeta, klass).__init__(*args, **kwargs)
 
 class Database:
     def __init__(self, database_name, adapter='sqlite3'):
@@ -47,8 +32,14 @@ class Database:
     
     def _mkclass(self, table):
         l = self.adapter.get_columns_and_types(table)
-        obj = type(table, (Orm, ), {'_fields' : l.keys(), 'db' : self, '__name__' : table})
-        return obj
+
+        class Table(Orm):
+            _fields = l.keys()
+            db = self
+            __table__ = table
+            __metaclass__ = TableMeta
+
+        return Table
 
     def __getattr__(self, name):
         if name in self.__dict__:
@@ -64,11 +55,11 @@ class Database:
         return "<database {0} instance>".format(self.__dbname__)
         
 class Orm(object):
-               
+    
     def filter(self, **kwargs):
-        tree = Tree(self.__name__)
-        tree.parse_and_add(**kwargs)
-        sql = tree.get_sql()
+        self.tree = Tree(self.__table__)
+        self.tree.parse_and_add(**kwargs)
+        sql = self.tree.get_sql()
         print sql
         return self.db.execute(sql)
 	
@@ -76,5 +67,8 @@ class Orm(object):
         pass
 
     def all(self):
-        pass
-
+        return self.filter()
+    
+    def distinct(self):
+        self.tree.distinct_f = True
+        return self
