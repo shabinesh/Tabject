@@ -16,9 +16,9 @@ get reflected on a application restart. See the below example:
 Usage
 ======
 ```
->>> from Tabject.orm import Orm
+>>> import tabject
 
->>> db = Database("dev.db")
+>>> db = tabject.Database("dev.db")
 
 >>> users = db.user_table
 
