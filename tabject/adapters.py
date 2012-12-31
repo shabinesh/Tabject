@@ -83,4 +83,4 @@ class SqliteAdapter(Adapter):
         return Text
 
     def get_columns_and_types(self, table):
-        return {r[1]:self._gettype(r[2]) for r in self.execute('PRAGMA table_info("{0}")'.format(table))}
+        return [(r[1], self._gettype(r[2])) for r in self.execute('PRAGMA table_info("{0}")'.format(table))]

@@ -2,6 +2,7 @@ from .exceptions import ImproperlyConfigured
 from .tree import Tree
 from .adapters import *
 import sqlite3
+import json
 
 class TableMeta(type):
     def __init__(klass, *args, **kwargs):
@@ -34,10 +35,13 @@ class Database:
         l = self.adapter.get_columns_and_types(table)
 
         class Table(Orm):
-            _fields = l.keys()
+            _fields = tuple([i[0] for i in l])
             db = self
             __table__ = table
             __metaclass__ = TableMeta
+            
+            def __repr__(self):
+                return "<Table instance '%s'>" % self.__table__
 
         return Table
 
@@ -45,7 +49,7 @@ class Database:
         if name in self.__dict__:
             return self.__dict__[name]
         if name in self._table_cache:
-            return self._table_cache.get(name)
+            return self._table_cache.get(name)()
         t = self._mkclass(name)
         self._table_cache[name] = t
         return t()
@@ -55,20 +59,37 @@ class Database:
         return "<database {0} instance>".format(self.__dbname__)
         
 class Orm(object):
-    
-    def filter(self, **kwargs):
+
+    def __init__(self):
         self.tree = Tree(self.__table__)
-        self.tree.parse_and_add(**kwargs)
-        sql = self.tree.get_sql()
-        print sql
-        return self.db.execute(sql)
+        
+    def filter(self,*args, **kwargs):
+        self.tree.parse_and_add(select=args, **kwargs)
+        return self
 	
     def get(self, **kwargs):
         pass
 
     def all(self):
+        return self
         return self.filter()
     
     def distinct(self):
         self.tree.distinct_f = True
         return self
+
+    def sql(self):
+        return self.tree.get_sql()
+
+    def x(self):
+        print self.sql()
+        return self.db.execute(self.sql())
+
+    def JSON(self):
+        return json.dumps([dict(zip(self._fields, item)) for item in self.x()])
+        
+        
+        
+    
+        
+        

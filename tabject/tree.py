@@ -13,6 +13,14 @@ _surround = lambda x, start, end: ''.join([start,x,end])
 class Child:
 
     def __init__(self, name, value, relation):
+        self.sub_tree = False
+        if value.__class__.__name__ == 'Table':
+            self.sub_tree = True
+            self.name = name
+            self.relation = relation
+            self.value = value
+            return
+
         if relation in Adapter.operations:
             self.relation = Adapter.operations[relation]
         else:
@@ -26,7 +34,8 @@ class Child:
         elif relation == 'in':
             self.q = spacecat(name, Adapter.operations[relation], ','.join([_surround(str(i),'"', '"') for i in value]))
         else:
-            self.q = spacecat(name, Adapter.operations[relation], str(value))   
+            self.q = spacecat(name, Adapter.operations[relation], str(value))
+        
     
     def get_c(self):
         return self.q
@@ -37,17 +46,17 @@ class Tree:
     _connectors = ('AND', 'OR')
     _quantifier = 'DISTINCT'
 
-    def __init__(self, table, field=None):
-        self.field = field if field else '*'
+    def __init__(self, table):
         self.t = []
         self.table = table
         self.distinct_f = False
 
     def create_select(self):
         d = self._quantifier if self.distinct_f else ''
-        self.template = "SELECT {0} {1} FROM {2}".format(d, self.field, self.table)
+        select_fields = '*' if not self.select_fields else ', '.join(self.select_fields)
+        self.template = "SELECT {0} {1} FROM {2}".format(d, select_fields, self.table)
         
-    def parse_and_add(self, **kwargs):
+    def parse_and_add(self, select=[], **kwargs):
         for s, v in kwargs.items():
             if '__' in s:
                 name, relation  = s.split('__')
@@ -55,30 +64,26 @@ class Tree:
                 name, relation = s, 'eq'
             self.add(name, v, relation)
 
+        self.select_fields = select if select else None
+
     def add(self, name, value, relation, connector='AND'):
         assert connector in self._connectors, "'{0}' is not valid connector".format(connector)
-        if type(value) in (int, str, list, tuple):
-            child = Child(name, value, relation)
-            self.t.append((connector, child))
-        else:
-            self.t.append((relation, value))
+        child = Child(name, value, relation)
+        self.t.append((connector, child))
         return
-    
-    def _is_child(self, c):
-        if isinstance(c, Child):
-            return True
-        return False
 
     def get_sql(self):
         query = ''
         self.create_select()
+        t = sorted(self.t, key=lambda o: 1 if o[1].__class__.__name__ == 'Table' else 0)
         for c, obj in self.t:
-            if isinstance(obj, Child):
+            if not obj.sub_tree:
                 query = spacecat(query, obj.get_c(), c)
-            elif isinstance(obj, Tree):
-                query = _surround(obj.get_sql(), '(', ')')
+            else:
+                query += spacecat(obj.name, obj.relation, '(', obj.value.filter(obj.name).sql(), ')')                
+        if query.rsplit(' ',1)[0] == 'AND': query = query.rsplit(' ',1)[0] + ' '
         where_clause = '' if query == '' else 'WHERE'
-        return spacecat(self.template, where_clause, query).rsplit(' ',1)[0]
+        return spacecat(self.template, where_clause, query) #.rsplit(' ',1)[0]
 
         
 
