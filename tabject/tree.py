@@ -35,8 +35,7 @@ class Child:
             self.q = spacecat(name, Adapter.operations[relation], ','.join([_surround(str(i),'"', '"') for i in value]))
         else:
             self.q = spacecat(name, Adapter.operations[relation], str(value))
-        
-    
+            
     def get_c(self):
         return self.q
             
@@ -75,15 +74,16 @@ class Tree:
     def get_sql(self):
         query = ''
         self.create_select()
-        t = sorted(self.t, key=lambda o: 1 if o[1].__class__.__name__ == 'Table' else 0)
-        for c, obj in self.t:
+        for index, item in enumerate(self.t):
+            c, obj = item
             if not obj.sub_tree:
-                query = spacecat(query, obj.get_c(), c)
+                if query and not index == len(self.t): 
+                    query = spacecat(query, 'AND')
+                query = spacecat(query, obj.get_c())
             else:
-                query += spacecat(obj.name, obj.relation, '(', obj.value.filter(obj.name).sql(), ')')                
-        if query.rsplit(' ',1)[0] == 'AND': query = query.rsplit(' ',1)[0] + ' '
+                query += spacecat(obj.name, obj.relation, '(', obj.value.filter(obj.name).sql(), ')')
         where_clause = '' if query == '' else 'WHERE'
-        return spacecat(self.template, where_clause, query) #.rsplit(' ',1)[0]
+        return spacecat(self.template, where_clause, query)
 
         
 
