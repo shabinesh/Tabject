@@ -81,7 +81,8 @@ class Tree:
                     query = spacecat(query, 'AND')
                 query = spacecat(query, obj.get_c())
             else:
-                query += spacecat(obj.name, obj.relation, '(', obj.value.filter(obj.name).sql(), ')')
+                con = 'AND' if index <= len(self.t) and query else ''
+                query = spacecat(query, con, obj.name, obj.relation, '(', obj.value.filter(obj.name).sql(), ')')
         where_clause = '' if query == '' else 'WHERE'
         return spacecat(self.template, where_clause, query)
 

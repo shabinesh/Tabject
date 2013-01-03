@@ -71,8 +71,7 @@ class Orm(object):
         pass
 
     def all(self):
-        return self
-        return self.filter()
+        return self.filter(select=[])
     
     def distinct(self):
         self.tree.distinct_f = True
